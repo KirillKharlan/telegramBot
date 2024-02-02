@@ -25,6 +25,9 @@ def delete_column(name_column):
 # True bool
 # () tuple
 # {} dict
+def get_value(column= "*",name_table="AdminPassword"):
+    cursor.execute(f"SELECT {column} FROM {name_table}")
+    return cursor.fetchall()
 def set_value(columns=("name",'123'),values=[],name_table="Users"):
     text=""
     for column in range(len(columns)-1):
