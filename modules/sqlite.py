@@ -9,15 +9,16 @@ cursor = data.cursor()
 def add_column(name_column,type_column,name_table="Users"):
     try:
         cursor.execute(f"ALTER TABLE {name_table} ADD COLUMN {name_column} {type_column}")
+        return "execute"
     except:
         print("Error column")
-
+        return "Error"
 def delete_column(name_column):
     try:
         cursor.execute(f"ALTER TABLE Users DROP COLUMN {name_column}")
     except:
         print("Error column")
-
+# def create_table()
 # [] list
 # 0.0 float
 # 0 int

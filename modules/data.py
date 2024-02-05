@@ -7,5 +7,6 @@ reg = [False,None]
 users = {}
 moderator_id = 2036291862
 list_admin=[]
+dict_users = {}
 # data_agmin=
 # list_admin = 

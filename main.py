@@ -35,31 +35,57 @@ async def continue_1(message:aiogram.types.Message):
         id = str(m_data.list_admin[-1][-1])
         name=str(m_data.list_admin[-1][0])
         if message.text == "accept":
-            m_sqlite.add_column(name,"TEXT","AdminPassword")
-            m_sqlite.add_column(name,"TEXT","Administration")
-            m_sqlite.add_column(name,"TEXT","AdminEmail")
-            m_sqlite.add_column(name,"TEXT","AdminPhone")
+            m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS Admin_{name} (INTEGER PRIMARY KEY,id)")
+            m_sqlite.add_column("username","TEXT",f"Admin_{name}")
+            m_sqlite.add_column("password","TEXT",f"Admin_{name}")
+            m_sqlite.add_column("email","TEXT",f"Admin_{name}")
+            m_sqlite.add_column("phone","TEXT",f"Admin_{name}")
             m_sqlite.data.commit()
-            m_sqlite.set_value(columns=(name,"test"),values=(m_data.users[id]["phone"],message.text),name_table="AdminPhone")
-            m_sqlite.set_value(columns=(name,"test"),values=(m_data.users[id]["email"],message.text),name_table="AdminEmail")
-            m_sqlite.set_value(columns=(name,"test"),values=(m_data.users[id]["password"],message.text),name_table="AdminPassword")
-            m_sqlite.set_value(columns=(name,"test"),values=(m_data.users[id]["username"],message.text),name_table="Administration")
+            m_sqlite.set_value(columns=(
+                                        "username",
+                                        "password",
+                                        "email",
+                                        "phone"),
+                               values=(
+                                    m_data.users[id]["username"],
+                                    m_data.users[id]["password"],
+                                    m_data.users[id]["email"],
+                                    m_data.users[id]["phone"],
+                                    ),
+                               name_table= f"Admin_{name}")
+
+        
+            # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["phone"],message.text),name_table="AdminPhone")
+            # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["email"],message.text),name_table="AdminEmail")
+            # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["password"],message.text),name_table="AdminPassword")
+            # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["username"],message.text),name_table="Administration")
             await m_data.bot.send_message(id,"Ви зареєстровані")
+            await message.answer(f"адміністратор {m_data.users[id]['username']} зареєстрований")
             del m_data.list_admin[-1]
             m_sqlite.data.commit()
         elif message.text=="no accept":
             await m_data.bot.send_message(id,"Ви не зареєстровані")
             del m_data.list_admin[-1]
     else:
-        # print(message) 
-        m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS AdminPassword (INTEGER PRIMARY KEY,id)")
-        m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS AdminEmail (INTEGER PRIMARY KEY,id)")
-        m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS AdminPhone (INTEGER PRIMARY KEY,id)")
-        m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS Administration (INTEGER PRIMARY KEY,id)")
-        m_sqlite.add_column("test","TEXT","AdminPassword")
-        m_sqlite.add_column("test","TEXT","Administration")
-        m_sqlite.add_column("test","TEXT","AdminEmail")
-        m_sqlite.add_column("test","TEXT","AdminPhone")
+        name_1=None
+        if message.chat.username != None:
+            name_1=message.chat.username
+        elif message.chat.first_name != None:
+            name_1=message.chat.first_name
+        elif message.chat.last_name != None:
+            name_1=message.chat.last_name
+        name = name_1.split(" ")
+        name = "_".join(name)
+        # m_data.dict_users[message.chat.id]=[message.chat.username,message.chat.first_name,message.chat.last_name,name]
+        
+        # m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS AdminPassword (INTEGER PRIMARY KEY,id)")
+        # m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS AdminEmail (INTEGER PRIMARY KEY,id)")
+        # m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS AdminPhone (INTEGER PRIMARY KEY,id)")
+        # m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS Administration (INTEGER PRIMARY KEY,id)")
+        # m_sqlite.add_column("test","TEXT","AdminPassword")
+        # m_sqlite.add_column("test","TEXT","Administration")
+        # m_sqlite.add_column("test","TEXT","AdminEmail")
+        # m_sqlite.add_column("test","TEXT","AdminPhone")
         # m_sqlite.add_column(name_column="burger",type_column="INTEGER",name_table=message.from_user.username)
         # m_sqlite.add_column(name_column="hotDog",type_column="INTEGER",name_table=message.from_user.username)
         if m_data.reg[0]:
@@ -68,30 +94,30 @@ async def continue_1(message:aiogram.types.Message):
                 # print(m_data.users[str(message.chat.id)]["username"])
                 m_data.users[str(message.chat.id)]["username"]=message.text
                 # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.text,message.text),name_table="AdminPassword")
-                await message.answer(text="Укажіть свії пароль")
+                await message.answer(text="Укажіть свій пароль")
             elif m_data.reg[1]=="password":
                 m_data.reg = [True,"email"]
                 m_data.users[str(message.chat.id)]["password"]=message.text
                 # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.text,message.text),name_table="AdminPassword")
-                await message.answer(text="Укажіть свії електрону почту")
+                await message.answer(text="вкажіть свою електронну пошту")
             elif m_data.reg[1]=="email":
                 m_data.reg = [True,"phone"]
                 m_data.users[str(message.chat.id)]["email"]=message.text
                 # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.text,message.text),name_table="AdminEmail")
-                await message.answer(text="Укажіть свії номер телефону")
+                await message.answer(text="Укажіть свій номер телефону")
             elif m_data.reg[1]=="phone":
                 m_data.reg = [False,None]
                 m_data.users[str(message.chat.id)]["phone"]=message.text
                 # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.text,message.text),name_table="AdminPhone")
                 
                 await message.answer(text="Зачекайте підтвердження модератора")
-                text=f"Людина {str(message.chat.first_name)} хоче стати адміном:\n"
+                text=f"Людина {str(name)} хоче стати адміном:\n"
                 text+=f"\t username: {m_data.users[str(message.chat.id)]['username']}\n"
                 text+=f"\t password: {m_data.users[str(message.chat.id)]['password']}\n"
                 text+=f"\t email: {m_data.users[str(message.chat.id)]['email']}\n"
                 text+=f"\t phone: {m_data.users[str(message.chat.id)]['phone']}"
-                print(message.chat.first_name,message.chat.id,m_data.list_admin)
-                m_data.list_admin+=[[message.chat.first_name,message.chat.id]]
+                # print(message.chat.first_name,message.chat.id,m_data.list_admin)
+                m_data.list_admin+=[[name,message.chat.id]]
                 await m_data.bot.send_message(m_data.moderator_id,text,reply_markup=m_keyboard.create_keyboard([["accept","no accept"]]))
                 # await m_data.bot.send_message(m_data.moderator_id,f"\t username: {m_data.users[message.chat.username]['username']}")
                 # await m_data.bot.send_message(m_data.moderator_id,f"\t password: {m_data.users[message.chat.username]['password']}")
@@ -108,19 +134,19 @@ async def continue_1(message:aiogram.types.Message):
                 await message.answer(text="Реєстрація або Авторизація",reply_markup=m_keyboard.create_keyboard([["Авторизація","Реєстрація"]]))
             elif message.text == "Реєстрація" and m_data.user == "admin":
                 try:
-                    print(m_sqlite.get_value(message.chat.username,"AdminPhone")[0][0])
-                    if not m_sqlite.get_value(message.chat.username,"AdminPhone")[0][0]:
+                    # print(m_sqlite.get_value(message.chat.username,"AdminPhone")[0][0])
+                    if not m_sqlite.get_value(message.chat.username,f"Admin_{name}")[0][0]:
                         0//0
-                    await message.answer(text="Администратор с даним ником уже существуєт")
+                    await message.answer(text="Адміністратор з цим ником вже існує")
                 except:
-                    m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="Administration")
-                    m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="AdminPassword")
-                    m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="AdminEmail")
-                    m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="AdminPhone")
+                    # m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="Administration")
+                    # m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="AdminPassword")
+                    # m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="AdminEmail")
+                    # m_sqlite.add_column(name_column=message.chat.username,type_column="TEXT",name_table="AdminPhone")
                     m_data.users[str(message.chat.id)]={"user":message.chat.username}
                     m_data.reg=[True,"username"]
                     # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.chat.username,message.text),name_table="Administration")
-                    await  message.answer(text="Укажіть свії ім'я пользивателя")
+                    await  message.answer(text="вкажіть ім'я користувача")
             elif message.text == "Авторизація":
                 pass
         # await m_image.image("hotDog.jpg",message,reply_markup=m_keyboard.create_inline_keyboard())
