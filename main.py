@@ -83,7 +83,25 @@ async def continue_1(message:aiogram.types.Message):
         try:
             print(m_data.dict_admin[f"{message.chat.id}"])
             if m_data.dict_admin[f"{message.chat.id}"][0]:
-                
+                if message.text == "Відправити повідомлення" and m_data.dict_admin[f"{message.chat.id}"][1]["status"]==None:
+                    await message.answer(text="Вкажіть текст сповіщення")
+                    m_data.dict_admin[f"{message.chat.id}"][1]["status"]="text"
+                elif  m_data.dict_admin[f"{message.chat.id}"][1]["status"]=="text":
+                    await message.answer(text="Вкажіть опис повідомлення")
+                    m_data.dict_admin[f"{message.chat.id}"][1]["status"]="description1"
+                    m_data.dict_admin[f"{message.chat.id}"][1]["text"]=message.text
+                elif m_data.dict_admin[f"{message.chat.id}"][1]["status"]=="description1":
+                    # inline_keyboard = aiogram.types.InlineKeyboardMarkup(inline_keyboard=[[
+                    #         aiogram.types.InlineKeyboardButton(text="INFO",callback_data="buy 0"),
+                    #         aiogram.types.InlineKeyboardButton(text="BUY",callback_data="decline")
+                    #     ],
+                    #     [
+                    #         aiogram.types.InlineKeyboardButton(text="")
+                    #     ] 
+                    # ])
+                    # # [[1,2][8]]
+                    # await message.answer(text=m_data.dict_admin[f"{message.chat.id}"][1]["text"])
+                    await message.answer(text="Зараз ще не готово")
                 if message.text == "Додати продукт" and m_data.dict_admin[f"{message.chat.id}"][1]["status"]==None:
                     await message.answer(text="Вкажіть назву продукту")
                     m_data.dict_admin[f"{message.chat.id}"][1]["status"]="name"
@@ -102,6 +120,7 @@ async def continue_1(message:aiogram.types.Message):
                     print()
                     print(message.document)
                     print()
+                    
                     image_id = None
                     if message.photo != None:
                         image_id =message.photo[-1].file_id
@@ -248,11 +267,16 @@ async def continue_1(message:aiogram.types.Message):
 async def call_back(callback:aiogram.types.callback_query.CallbackQuery):
     message = callback.message
     if message.chat.id==m_data.moderator_id:
-        list= callback.data.split("_")
-        id = list[-2]
-        name= list[1]
+        
+        
         try:
-            if list[0] == "accept":
+            list= callback.data.split("_")
+            id = list[2]
+            name= list[1]
+            can=list[-1]
+            print(can)
+            print(bool("False"))
+            if list[0] == "accept" and can == "True":
                 name=m_data.users[id]['username']
                 m_sqlite.cursor.execute(f"CREATE TABLE IF NOT EXISTS Admin_{name} (INTEGER PRIMARY KEY,id)")
                 m_sqlite.add_column("username","TEXT",f"Admin_{name}")
@@ -273,7 +297,7 @@ async def call_back(callback:aiogram.types.callback_query.CallbackQuery):
                                         ),
                                 name_table= f"Admin_{name}")
 
-            
+
                 # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["phone"],message.text),name_table="AdminPhone")
                 # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["email"],message.text),name_table="AdminEmail")
                 # m_sqlite.set_value(columns=("i"+id,"test"),values=(m_data.users[id]["password"],message.text),name_table="AdminPassword")
@@ -282,11 +306,18 @@ async def call_back(callback:aiogram.types.callback_query.CallbackQuery):
                 await m_data.bot.send_message(id,"Ви зареєстровані",reply_markup=m_keyboard.create_keyboard([["Додати продукт","Надіслати повідомлення"]]))
                 await message.answer(f"адміністратор {m_data.users[id]['username']} зареєстрований")
                 m_sqlite.data.commit()
+                m_data.dict_admin[id]= [True,{"status": None}]
                 # m_data.list_admin[f"{m_data.users[f'{message.chat.id}']['username']}"] = False
-            elif list[0]=="reject" :
+            elif list[0]=="reject" and can == "True":
 
                 await m_data.bot.send_message(id,"Ви не зареєстровані")
                 # m_data.list_admin[f"{m_data.users[f'{message.chat.id}']['username']}"] = False
+            del list[-1]
+            inline_keyboard=message.reply_markup
+            inline_keyboard.inline_keyboard[0][0].callback_data = "_".join(list)
+            inline_keyboard.inline_keyboard[0][1].callback_data = "_".join(list)
+            await message.edit_reply_markup(callback.inline_message_id,inline_keyboard)
+
         except:
             pass
             # m_data.list_admin[f"{m_data.users[f'{message.chat.id}']['username']}"] = False
