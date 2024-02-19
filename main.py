@@ -31,6 +31,8 @@ async def start(message:aiogram.types.Message):
 @m_data.dp.message()
 async def continue_1(message:aiogram.types.Message):
     print(message.chat.id,m_data.moderator_id)
+    
+    # await m_data.bot.send_photo(chat_id=-1002018580317,photo= "AgACAgIAAxkBAAIIlGXTnD7A3y9I20yYBj-kW_QGUTcqAAIw1jEbHNqhSs55BHrdiYNbAQADAgADeQADNAQ")
     if message.chat.id==m_data.moderator_id:
 
         id = str(m_data.list_admin[-1][-1])
@@ -71,13 +73,15 @@ async def continue_1(message:aiogram.types.Message):
             del m_data.list_admin[-1]
     
     else:
-        name_1=None
+        name_1="None"
         if message.chat.username != None:
             name_1=message.chat.username
         elif message.chat.first_name != None:
             name_1=message.chat.first_name
         elif message.chat.last_name != None:
             name_1=message.chat.last_name
+        # else:
+        #     name_1
         name = name_1.split(" ")
         name = "_".join(name)
         try:
@@ -130,14 +134,21 @@ async def continue_1(message:aiogram.types.Message):
                     # AgACAgIAAxkBAAIGImXKZgGc32A7myq6jhJnUjvjIGRkAAIN2jEbSpdQSg4LLB8ljT0rAQADAgADeQADNAQ
                     if image_id != None:
                         #await message.answer_photo(image_id)
+                        print(111)
                         m_sqlite.add_product(
                             m_data.dict_admin[f"{message.chat.id}"][1]["name"],
                             m_data.dict_admin[f"{message.chat.id}"][1]["description"],
                             image_id,
                             message
                         )
+                        print(113)
                         await message.answer(text="Продукт знаходиться в базі данних\nприклад продукту:")
                         await message.answer_photo(image_id,reply_markup=m_keyboard.inline_keyboard)
+                        # -1002018580317
+                        print(115)
+                        print(image_id)
+                        await m_data.bot.send_photo(chat_id=-1002018580317,photo= image_id,reply_markup= m_keyboard.inline_keyboard)
+                        print(116)
                     else:
                         await message.answer(text="Ви відіслали не зображення")
                     print(image_id)
@@ -266,7 +277,32 @@ async def continue_1(message:aiogram.types.Message):
 @m_data.dp.callback_query()
 async def call_back(callback:aiogram.types.callback_query.CallbackQuery):
     message = callback.message
-    if message.chat.id==m_data.moderator_id:
+    # -1002018580317
+    if message.chat.id == -1002018580317:
+        if "buy" in callback.data:
+            data = callback.data.split(" ")
+            reply_markup= message.reply_markup
+            
+            if len(reply_markup.inline_keyboard)==1:
+                reply_markup.inline_keyboard.append([aiogram.types.inline_keyboard_button.InlineKeyboardButton(text="accept",callback_data="accept")])
+            data[-1]=str(int(data[-1])+1)
+            reply_markup.inline_keyboard[0][0].callback_data=" ".join(data)
+            reply_markup.inline_keyboard[0][0].text=" ".join(data)
+            await message.edit_reply_markup(callback.inline_message_id,reply_markup)
+        elif "decline" in callback.data:
+            reply_markup= message.reply_markup
+            data=reply_markup.inline_keyboard[0][0].callback_data.split(" ")
+            if data[-1]!="0":
+                data[-1]=str(int(data[-1])-1)
+                reply_markup.inline_keyboard[0][0].callback_data=" ".join(data)
+                reply_markup.inline_keyboard[0][0].text=" ".join(data)
+                if data[-1]=="0":
+                    reply_markup=m_keyboard.inline_keyboard
+                await message.edit_reply_markup(callback.inline_message_id,reply_markup)
+        elif "accept" in callback.data:
+            
+            await message.edit_reply_markup(callback.inline_message_id,m_keyboard.inline_keyboard)
+    elif message.chat.id==m_data.moderator_id:
         
         
         try:
