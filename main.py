@@ -7,6 +7,9 @@ import modules.data as m_data
 import modules.sqlite as m_sqlite
 import modules.image as m_image
 import modules.keyboard as m_keyboard
+# {'2036291862': [True, {'status': 'image', 'name': 'hello', 'description': 'hello'}]}
+# AgACAgIAAxkBAAILzGXffjgWQEXNxHF74_dEVupJx3GLAAJp1TEb3YX5SvB-7Ef0DSegAQADAgADbQADNAQ
+# m_sqlite.add_product("hello","hello","AgACAgIAAxkBAAILzGXffjgWQEXNxHF74_dEVupJx3GLAAJp1TEb3YX5SvB-7Ef0DSegAQADAgADbQADNAQ")
 @m_data.dp.message(filters.CommandStart())
 async def start(message:aiogram.types.Message):
     #m_data.user = message.chat.username
@@ -129,7 +132,7 @@ async def continue_1(message:aiogram.types.Message):
                             aiogram.types.InlineKeyboardButton(text="INFO",callback_data="INFO")
                         ]])
                         text= m_data.dict_admin[f"{message.from_user.id}"][1]["text"]
-                        photo = m_sqlite.get_value("path","Product_"+m_data.dict_admin[f'{message.from_user.id}'][1]['name1'])
+                        photo = m_sqlite.get_value("path","Product_"+m_data.dict_admin[f'{message.from_user.id}'][1]['name1'])[-1][-1]
                         print(photo)
                         await m_data.bot.send_photo(chat_id=-1002018580317, reply_markup = reply_markup,caption=text,photo=photo)
                     elif message.text=="Ні":
@@ -163,6 +166,8 @@ async def continue_1(message:aiogram.types.Message):
                     if image_id != None:
                         #await message.answer_photo(image_id)
                         print(111)
+                        print(m_data.dict_admin)
+                        print(image_id)
                         m_sqlite.add_product(
                             m_data.dict_admin[f"{message.from_user.id}"][1]["name"],
                             m_data.dict_admin[f"{message.from_user.id}"][1]["description"],
@@ -292,6 +297,7 @@ async def continue_1(message:aiogram.types.Message):
             else:
                 try:
                     if m_data.autoriz[str(message.from_user.id)] != None:
+                        print(m_data.autoriz)
                         user_name=m_data.user[str(message.from_user.id)]
                         if m_data.autoriz[str(message.from_user.id)] == "username":
                             try:
@@ -303,12 +309,13 @@ async def continue_1(message:aiogram.types.Message):
                                 m_data.autoriz[str(message.from_user.id)]="password"
                             except:
                                 #if user_nam
+                                m_data.autoriz[str(message.from_user.id)] = None
                                 await message.answer(text="користувача з даним ніком не існує")#так существует или нет
                         elif m_data.autoriz[str(message.from_user.id)] == "password":
                             data = lambda column: m_sqlite.get_value(
                                 column=column,
                                 name_table=f"{user_name}_"+m_data.users[str(message.from_user.id)]["username"]
-                            )
+                            )[0][0]
                             print(data("password"))
                             if data("password")==message.text:
                                 m_data.users[f"{message.from_user.id}"]["email"] = data("email") 
@@ -354,9 +361,10 @@ async def continue_1(message:aiogram.types.Message):
                         
             # await m_image.image("hotDog.jpg",message,reply_markup=m_keyboard.create_inline_keyboard())
 @m_data.dp.callback_query()
-async def call_back(callback:aiogram.types.callback_query.CallbackQuery):
+async def call_back(callback:aiogram.types.callback_query.CallbackQuery):#
     message = callback.message
     # -1002018580317
+    print(message.chat.id,m_data.moderator_id,message.chat.id==m_data.moderator_id)
     if message.photo!= None:
         if "buy" in callback.data:
             data = callback.data.split(" ")
@@ -413,12 +421,12 @@ async def call_back(callback:aiogram.types.callback_query.CallbackQuery):
             data=callback.data.split(" ") 
             inline_keyboard=m_keyboard.inline_keyboard
             inline_keyboard.inline_keyboard[0][0].callback_data+=" "+data[1]
-            await m_data.bot.send_photo(chat_id=callback.from_user.id,photo=m_sqlite.get_value("path",data[1]),reply_markup=inline_keyboard)
+            await m_data.bot.send_photo(chat_id=callback.from_user.id,photo=m_sqlite.get_value("path",data[1])[-1][-1],reply_markup=inline_keyboard)
         elif "INFO" in callback.data:
             data=callback.message.reply_markup.inline_keyboard[0][0].callback_data.split(" ")[1]
-            text=f"Опис продукту {data}:\n\t"+m_sqlite.get_value("description",data)
+            text=f"Опис продукту {data}:\n\t"+m_sqlite.get_value("description",data)[-1][-1]
             await m_data.bot.send_message(chat_id=callback.from_user.id,text=text)
-    elif message.from_user.id==m_data.moderator_id:
+    elif callback.from_user.id==m_data.moderator_id:
         
         
         # try:
