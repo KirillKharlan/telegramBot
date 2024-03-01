@@ -88,12 +88,16 @@ async def continue_1(message:aiogram.types.Message):
         name = name_1.split(" ")
         name = "_".join(name)
         try:
+            print(150)
             print(m_data.dict_admin[f"{message.from_user.id}"])
             if m_data.dict_admin[f"{message.from_user.id}"][0] and m_data.user[str(message.from_user.id)]=="admin":
                 # Надіслати повідомлення
                 if message.text == "Надіслати повідомлення" and m_data.dict_admin[f"{message.from_user.id}"][1]["status"]==None:
                     print("hello")
-                    await message.answer(text="Вкажіть назву продукту")
+                    list_products = m_sqlite.get_value(column="product",name_table="List_products")
+                    print(list_products,152,1522)
+                    reply_markup = m_keyboard.create_keyboard(list_products)
+                    await message.answer(text="Вкажіть назву продукту",reply_markup = reply_markup)
                     m_data.dict_admin[f"{message.from_user.id}"][1]["status"]="name1"
 
                 elif  m_data.dict_admin[f"{message.from_user.id}"][1]["status"]=="text":
@@ -110,8 +114,8 @@ async def continue_1(message:aiogram.types.Message):
                         m_data.dict_admin[f"{message.from_user.id}"][1]["status"]="text"
                         m_data.dict_admin[f"{message.from_user.id}"][1]["name1"]=message.text
                     except:
-                        await message.answer(text="Невірна назва продукту")
-                        m_data.dict_admin[f"{message.from_user.id}"]= [True,None]
+                        await message.answer(text="Невірна назва продукту",reply_markup=m_keyboard.create_keyboard([["Додати продукт","Надіслати повідомлення"]]))
+                        m_data.dict_admin[f"{message.from_user.id}"]= [True,{"status": None}]
 
                 elif m_data.dict_admin[f"{message.from_user.id}"][1]["status"]=="continue":
 
@@ -125,7 +129,11 @@ async def continue_1(message:aiogram.types.Message):
                     # ])
                     # # [[1,2][8]]
                     # await message.answer(text=m_data.dict_admin[f"{message.from_user.id}"][1]["text"])
+                    # "Додати продукт","Надіслати повідомлення"
                     if message.text=="Так":
+                        reply_markup = m_keyboard.create_keyboard([["Додати продукт","Надіслати повідомлення"]])
+                        await message.answer("Сообщение відправлено в групу",reply_markup=reply_markup)
+                        
                         print(m_data.dict_admin[f"{message.from_user.id}"][1])
                         reply_markup = aiogram.types.InlineKeyboardMarkup(inline_keyboard=[[
                             aiogram.types.InlineKeyboardButton(text="BUY",callback_data=f"BUY {'Product_'+m_data.dict_admin[f'{message.from_user.id}'][1]['name1']}"),
@@ -135,15 +143,22 @@ async def continue_1(message:aiogram.types.Message):
                         photo = m_sqlite.get_value("path","Product_"+m_data.dict_admin[f'{message.from_user.id}'][1]['name1'])[-1][-1]
                         print(photo)
                         await m_data.bot.send_photo(chat_id=-1002018580317, reply_markup = reply_markup,caption=text,photo=photo)
-                    elif message.text=="Ні":
-                        m_data.dict_admin[f"{message.from_user.id}"]= [True,None]
+                    # elif message.text=="Ні":
+                    m_data.dict_admin[f"{message.from_user.id}"]= [True,{"status": None}]
                 if message.text == "Додати продукт" and m_data.dict_admin[f"{message.from_user.id}"][1]["status"]==None:
                     await message.answer(text="Вкажіть назву продукту")
                     m_data.dict_admin[f"{message.from_user.id}"][1]["status"]="name"
                 elif m_data.dict_admin[f"{message.from_user.id}"][1]["status"]=="name":
-                    await message.answer(text="Вкажіть опис продукту")
-                    m_data.dict_admin[f"{message.from_user.id}"][1]["status"]="description"
-                    m_data.dict_admin[f"{message.from_user.id}"][1]["name"]=message.text
+                    try:
+                        m_sqlite.cursor.execute(f"DROP TABLE IF EXISTS Check_{message.text}")
+                        m_sqlite.cursor.execute(f"CREATE TABLE Check_{message.text} (INTEGER PRIMARY KEY,id)")
+                        # m_sqlite.cursor.execute(f"DROP TABLE IF EXISTS Check_{message.text}")
+                        await message.answer(text="Вкажіть опис продукту")
+                        m_data.dict_admin[f"{message.from_user.id}"][1]["status"]="description"
+                        m_data.dict_admin[f"{message.from_user.id}"][1]["name"]=message.text
+                    except: 
+                        await message.answer(text="Назва має не корректний символ")
+                    
                 elif "description" == m_data.dict_admin[f"{message.from_user.id}"][1]["status"]:
                     # print(m_data.dict_admin[f"{message.from_user.id}"][1].split("_descriptio"))
                     m_data.dict_admin[f"{message.from_user.id}"][1]["status"]="image"
@@ -175,7 +190,7 @@ async def continue_1(message:aiogram.types.Message):
                             message
                         )
                         print(113)
-                        await message.answer(text="Продукт знаходиться в базі данних\nприклад продукту:")
+                        await message.answer(text="Продукт знаходиться в базі данних\nприклад продукту:",reply_markup=m_keyboard.create_keyboard([["Додати продукт","Надіслати повідомлення"]]))
                         inline_keyboard=m_keyboard.inline_keyboard
                         inline_keyboard.inline_keyboard[0][0].callback_data+=f" {m_data.dict_admin[f'{message.from_user.id}'][1]['name']}"
                         await message.answer_photo(image_id,reply_markup=m_keyboard.inline_keyboard)
@@ -184,10 +199,10 @@ async def continue_1(message:aiogram.types.Message):
                         print(image_id)
                         # await m_data.bot.send_photo(chat_id=-1002018580317,photo= image_id,reply_markup= m_keyboard.inline_keyboard)
                         print(116)
-                        m_data.dict_admin[f"{message.from_user.id}"]= [True,None]
+                        m_data.dict_admin[f"{message.from_user.id}"]= [True,{"status": None}]
                     else:
-                        await message.answer(text="Ви відіслали не зображення")
-                        m_data.dict_admin[f"{message.from_user.id}"]= [True,None]
+                        await message.answer(text="Ви відіслали не зображення",reply_markup=m_keyboard.create_keyboard([["Додати продукт","Надіслати повідомлення"]]))
+                        m_data.dict_admin[f"{message.from_user.id}"]= [True,{"status": None}]
                     print(image_id)
             print('hi','hello')
         except:
@@ -207,16 +222,23 @@ async def continue_1(message:aiogram.types.Message):
             if m_data.reg[0]:
                 if m_data.reg[1]== "username":
                     try:
-                        user_name=m_data.user[str(message.from_user.id)]
-                        print(m_sqlite.get_value(name_table=f"{user_name}_{message.text}"))
-                        await message.answer(text="Користувач с таким ніком вже існує")
-                        m_data.reg = [False,None]
+                        m_sqlite.cursor.execute(f"DROP TABLE IF EXISTS Check_{message.text}")
+                        m_sqlite.cursor.execute(f"CREATE TABLE Check_{message.text} (INTEGER PRIMARY KEY,id)")
+                        try:
+                            
+                            user_name=m_data.user[str(message.from_user.id)]
+                            print(m_sqlite.get_value(name_table=f"{user_name}_{message.text}"))
+                            await message.answer(text="Користувач с таким ніком вже існує")
+                            m_data.reg = [False,None]
+                        except:
+                            m_data.reg = [True,"password"]
+                            # print(m_data.users[str(message.from_user.id)]["username"])
+                            m_data.users[str(message.from_user.id)]["username"]=message.text
+                            # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.text,message.text),name_table="AdminPassword")
+                            await message.answer(text="Укажіть свій пароль")
                     except:
-                        m_data.reg = [True,"password"]
-                        # print(m_data.users[str(message.from_user.id)]["username"])
-                    m_data.users[str(message.from_user.id)]["username"]=message.text
-                    # m_sqlite.set_value(columns=(message.chat.username,"test"),values=(message.text,message.text),name_table="AdminPassword")
-                    await message.answer(text="Укажіть свій пароль")
+                        await message.answer(text="Назва має не корректний символ")
+            
                 elif m_data.reg[1]=="password":
                     m_data.reg = [True,"email"]
                     m_data.users[str(message.from_user.id)]["password"]=message.text
@@ -329,6 +351,7 @@ async def continue_1(message:aiogram.types.Message):
                                     await message.answer(text="Ви були авторезовані")
                             else:
                                 await message.answer(text="Пароль не вірний ")
+                                m_data.autoriz[str(message.from_user.id)] = "username"
                             
                     else:
                         0/0
